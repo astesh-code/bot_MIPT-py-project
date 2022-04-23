@@ -15,7 +15,11 @@
 #
 # How to start
 ### Just from local machine
-`$ export API_KEY=<your_key>`
-`$ python bot.py`
+```
+$ export API_KEY=<your_key>
+$ python bot.py
+```
 ### From docker image
-`$ docker run docker run -e API_KEY=<your_key> edu_bot`
+```
+$ docker run docker run -e API_KEY=<your_key> edu_bot
+```
