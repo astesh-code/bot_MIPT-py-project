@@ -23,3 +23,7 @@ $ python bot.py
 ```
 $ docker run docker run -e API_KEY=<your_key> edu_bot
 ```
+#
+# Working screenshot
+![](https://github.com/astesh-code/python-rev2/raw/dev/pictures/work.png)
+#
