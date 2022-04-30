@@ -25,5 +25,5 @@ $ docker run docker run -e API_KEY=<your_key> edu_bot
 ```
 #
 # Working screenshot
-![](https://github.com/astesh-code/python-rev2/raw/dev/pictures/work.png)
+![](https://github.com/astesh-code/python_rev2/blob/dev/pictures/work.jpg)
 #
