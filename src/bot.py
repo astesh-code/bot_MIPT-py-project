@@ -1,28 +1,25 @@
-import telebot
-import csv
-from os import environ
-from time import time
-import stage as st
-import re
-import logging
 import config as conf
+import csv
+import logging
+import re
+import stage as st
+import telebot
+from os import environ
 
 TOKEN = environ.get("API_KEY")
-
-
 bot = telebot.TeleBot(TOKEN)
-new_user = 1
-mis_counter = 0
-logging.basicConfig(
+
+def start_log():
+    logging.basicConfig(
     filename=conf.log_path,
     level=logging.INFO,
     format="%(asctime)s:  in %(funcName)s:  %(message)s")
-logging.info('session starts')
+    logging.info('session starts')
 
 
 @bot.message_handler(commands=['start'])
 def get_start(message):
-    global tg_id
+    """Вызывается при первом запуске или команде /start"""
     tg_id = message.from_user.id
     logging.info(f'user {tg_id} uses start command')
     bot.send_message(tg_id, conf.phrases['hello1'])
@@ -31,6 +28,8 @@ def get_start(message):
 
 
 def get_input(message):
+    """вызывается при запросе ввода данных"""
+    tg_id = message.from_user.id
     if message.text == conf.btn_input or message.text == conf.btn_edit:
         bot.send_message(tg_id, conf.phrases['input_number'])
         bot.register_next_step_handler(message, get_number)
@@ -43,6 +42,8 @@ def get_input(message):
 
 
 def get_number(message):
+    """принимает и обрабатывает номер анкеты"""
+    tg_id = message.from_user.id
     global number
     number = message.text
     if re.match(r'[A-Z]{3}\-\d{5}\/\d{2}', number):
@@ -59,33 +60,38 @@ def get_number(message):
         bot.register_next_step_handler(message, get_number)
 
 
-def get_email(message):
-    global email
-    email = message.text
-    if re.match(r'[a-zA-Z0-9\-\._]+@[a-z0-9]+(\.[a-z0-9]+){1,}', email):
-
-        bot.send_message(
+def email_success(message):
+    """вызывается при вводе правильного email"""
+    tg_id = message.from_user.id
+    bot.send_message(
             tg_id,
             conf.phrases['data_updated'],
             reply_markup=usual_key()
         )
+    with open(conf.base_path) as r_file:
+        opened_file = csv.DictReader(
+            r_file,
+            delimiter=";",
+            lineterminator="\\n"
+        )
+        lis = [tg_id, number, email, 0]
+        for user in opened_file:
+            if int(user['tg_id']) == tg_id:
+                lis = [tg_id, number, email]
+    with open(conf.base_path, mode="a") as w_file:
+        file_writer = csv.writer(
+            w_file, delimiter=";", lineterminator="\n")
+        file_writer.writerow(lis)
+    logging.info(f'user {tg_id} updates data')
+    bot.register_next_step_handler(message, get_main)
 
-        with open(conf.base_path) as r_file:
-            opened_file = csv.DictReader(
-                r_file,
-                delimiter=";",
-                lineterminator="\\n"
-            )
-            lis = [tg_id, number, email, 0]
-            for user in opened_file:
-                if int(user['tg_id']) == tg_id and time() < float(user['ban']):
-                    lis = [tg_id, number, email, user['ban']]
-        with open(conf.base_path, mode="a") as w_file:
-            file_writer = csv.writer(
-                w_file, delimiter=";", lineterminator="\n")
-            file_writer.writerow(lis)
-        logging.info(f'user {tg_id} updates data')
-        bot.register_next_step_handler(message, get_main)
+def get_email(message):
+    """принимает и обрабатывает email"""
+    tg_id = message.from_user.id
+    global email
+    email = message.text
+    if re.match(r'[a-zA-Z0-9\-\._]+@[a-z0-9]+(\.[a-z0-9]+){1,}', email):
+        email_success(message)
     elif message.text == '/start' or message.text == conf.btn_reload:
         logging.info(f'user {tg_id} clears data')
         get_start(message)
@@ -99,30 +105,29 @@ def get_email(message):
         bot.send_message(tg_id, conf.phrases['check_email'])
         bot.register_next_step_handler(message, get_email)
 
+def btn_check(message):
+    """вызывается при нажатием пользователем кнопки запроса статуса, проверяет новый ли пользователь"""
+    tg_id = message.from_user.id
+    new_user = True
+    with open(conf.base_path) as r_file:
+        opened_file = csv.DictReader(
+            r_file, delimiter=";", lineterminator="\\n")
+        for user in opened_file:
+            if int(user['tg_id']) == tg_id:
+                new_user = False
+                email = user['email']
+                number = user['number']
+    if new_user:
+        bot.register_next_step_handler(message, get_start)
+    else:
+        ending(message)
 
 def get_main(message):
-    global tg_id, email, number, new_user
+    """дежурное состояние бота"""
+    global email, number
     tg_id = message.from_user.id
     if message.text == conf.btn_check:
-        with open(conf.base_path) as r_file:
-            opened_file = csv.DictReader(
-                r_file, delimiter=";", lineterminator="\\n")
-            for user in opened_file:
-                if int(user['tg_id']) == tg_id:
-                    new_user = 0
-                    email = user['email']
-                    number = user['number']
-                    ban = user['ban']
-        if new_user:
-            bot.register_next_step_handler(message, get_start)
-        elif float(ban) > time():
-            banos = int(float(ban)-float(time()))
-            bot.send_message(
-                tg_id, conf.phrases['ban_time']+f'{banos//60} м {banos%60} с')
-            logging.info(f'user {tg_id} gets message with ban time')
-            bot.register_next_step_handler(message, get_main)
-        else:
-            ending(message)
+        btn_check(message)
     elif message.text == conf.btn_edit or message.text == conf.btn_input:
         bot.send_message(tg_id, conf.phrases['input_number'])
         bot.register_next_step_handler(message, get_number)
@@ -133,51 +138,51 @@ def get_main(message):
     else:
         bot.register_next_step_handler(message, get_main)
 
+def success(data, message):
+    """вызываетяс при успешном запросе и выводит статус"""
+    tg_id = message.from_user.id
+    number = data.get('number')
+    name = data.get('name')
+    stage = data.get('stage').lower()
+    answer_first = f'Проверил статус завяления {number}, на имя {name}'
+    answer_second = f'Статус - {stage}'
+    bot.send_message(tg_id, answer_first)
+    bot.send_message(tg_id, answer_second)
+    bot.send_message(
+        tg_id, conf.phrases['success'], reply_markup=usual_key())
+    logging.info(f'user {tg_id} gets status: success')
+    bot.register_next_step_handler(message, get_main)
+
+def fail(message):
+    """вызывается при ошибке запроса"""
+    tg_id = message.from_user.id
+    bot.send_message(
+        tg_id, conf.phrases['fail'], reply_markup=usual_key())
+    logging.info(f'user {tg_id} gets status: fail')
+    bot.register_next_step_handler(message, get_main)
 
 def ending(message):
+    """вызывается при нажатии кнопки запроса, делает запрос"""
+    tg_id = message.from_user.id
     global number, email
     bot.send_message(tg_id, conf.phrases['waiting'])
     data = st.stage(number, email)
     if data:
-        number = data.get('number')
-        name = data.get('name')
-        stage = data.get('stage').lower()
-        answer_first = f'Проверил статус завяления {number}, на имя {name}'
-        answer_second = f'Статус - {stage}'
-        bot.send_message(tg_id, answer_first)
-        bot.send_message(tg_id, answer_second)
-        bot.send_message(
-            tg_id, conf.phrases['success'], reply_markup=usual_key())
-        logging.info(f'user {tg_id} gets status: success')
-        bot.register_next_step_handler(message, get_main)
+        success(data, message)
     else:
-        global mis_counter
-        mis_counter += 1
-        if mis_counter < 5:
-            bot.send_message(
-                tg_id, conf.phrases['fail'], reply_markup=usual_key())
-            logging.info(f'user {tg_id} gets status: fail')
-            bot.register_next_step_handler(message, get_main)
-        else:
-            bot.send_message(tg_id, conf.phrases['get_ban'])
-            logging.info(f'user {tg_id} gets ban')
-            with open(conf.base_path, mode="a") as w_file:
-                file_writer = csv.writer(
-                    w_file, delimiter=";", lineterminator="\n")
-                file_writer.writerow(
-                    [tg_id, number, email, time()+conf.ban_per])
-            bot.register_next_step_handler(message, get_main)
+        fail(message)
 
 
 @bot.message_handler()
 def sort_empty(message):
-    global tg_id
+    """вызывается, если пользователь ввел некорретное сообщение"""
     tg_id = message.from_user.id
     bot.send_message(tg_id, conf.phrases['input_number'])
     bot.register_next_step_handler(message, get_number)
 
 
 def start_key():
+    """клавиатура для первого запуска"""
     markup = telebot.types.ReplyKeyboardMarkup(
         one_time_keyboard=True,
         resize_keyboard=True
@@ -188,6 +193,7 @@ def start_key():
 
 
 def usual_key():
+    """клавиатура, если данные введены"""
     markup = telebot.types.ReplyKeyboardMarkup(
         one_time_keyboard=True,
         resize_keyboard=True

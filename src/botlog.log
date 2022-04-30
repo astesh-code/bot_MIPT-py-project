@@ -1,9 +1,0 @@
-2022-04-24 01:08:21,428:  in <module>:  session starts
-2022-04-24 01:10:00,174:  in <module>:  session starts
-2022-04-24 01:13:14,294:  in <module>:  session starts
-2022-04-24 01:14:06,172:  in get_email:  user 1264916399 updates data
-2022-04-24 01:14:27,641:  in get_start:  user 1264916399 uses start command
-2022-04-24 01:14:42,710:  in get_email:  user 1264916399 updates data
-2022-04-24 01:15:18,410:  in <module>:  session starts
-2022-04-24 01:15:25,333:  in get_start:  user 1264916399 uses start command
-2022-04-24 01:15:41,926:  in get_email:  user 1264916399 updates data
