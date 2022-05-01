@@ -4,21 +4,23 @@ import logging
 import re
 import stage as st
 import telebot
+
 from os import environ
+
 
 TOKEN = environ.get("API_KEY")
 bot = telebot.TeleBot(TOKEN)
 
-def start_log():
+def start_log() -> None:
     logging.basicConfig(
-    filename=conf.log_path,
-    level=logging.INFO,
-    format="%(asctime)s:  in %(funcName)s:  %(message)s")
+        filename=conf.log_path,
+        level=logging.INFO,
+        format="%(asctime)s:  in %(funcName)s:  %(message)s")
     logging.info('session starts')
 
 
 @bot.message_handler(commands=['start'])
-def get_start(message):
+def get_start(message) -> None:
     """Вызывается при первом запуске или команде /start"""
     tg_id = message.from_user.id
     logging.info(f'user {tg_id} uses start command')
@@ -27,7 +29,7 @@ def get_start(message):
     bot.register_next_step_handler(message, get_input)
 
 
-def get_input(message):
+def get_input(message) -> None:
     """вызывается при запросе ввода данных"""
     tg_id = message.from_user.id
     if message.text == conf.btn_input or message.text == conf.btn_edit:
@@ -41,7 +43,7 @@ def get_input(message):
         bot.register_next_step_handler(message, get_input)
 
 
-def get_number(message):
+def get_number(message) -> None:
     """принимает и обрабатывает номер анкеты"""
     tg_id = message.from_user.id
     global number
@@ -60,14 +62,14 @@ def get_number(message):
         bot.register_next_step_handler(message, get_number)
 
 
-def email_success(message):
+def email_success(message) -> None:
     """вызывается при вводе правильного email"""
     tg_id = message.from_user.id
     bot.send_message(
-            tg_id,
-            conf.phrases['data_updated'],
-            reply_markup=usual_key()
-        )
+        tg_id,
+        conf.phrases['data_updated'],
+        reply_markup=usual_key()
+    )
     with open(conf.base_path) as r_file:
         opened_file = csv.DictReader(
             r_file,
@@ -85,7 +87,8 @@ def email_success(message):
     logging.info(f'user {tg_id} updates data')
     bot.register_next_step_handler(message, get_main)
 
-def get_email(message):
+
+def get_email(message) -> None:
     """принимает и обрабатывает email"""
     tg_id = message.from_user.id
     global email
@@ -105,7 +108,8 @@ def get_email(message):
         bot.send_message(tg_id, conf.phrases['check_email'])
         bot.register_next_step_handler(message, get_email)
 
-def btn_check(message):
+
+def btn_check(message) -> None:
     """вызывается при нажатием пользователем кнопки запроса статуса, проверяет новый ли пользователь"""
     tg_id = message.from_user.id
     new_user = True
@@ -122,7 +126,8 @@ def btn_check(message):
     else:
         ending(message)
 
-def get_main(message):
+
+def get_main(message) -> None:
     """дежурное состояние бота"""
     global email, number
     tg_id = message.from_user.id
@@ -138,8 +143,12 @@ def get_main(message):
     else:
         bot.register_next_step_handler(message, get_main)
 
-def success(data, message):
-    """вызываетяс при успешном запросе и выводит статус"""
+
+def success(data:dict, message) -> None:
+    """
+    вызывается при успешном запросе и выводит статус
+    data: успещно полученный данные пользователя
+    """
     tg_id = message.from_user.id
     number = data.get('number')
     name = data.get('name')
@@ -153,7 +162,8 @@ def success(data, message):
     logging.info(f'user {tg_id} gets status: success')
     bot.register_next_step_handler(message, get_main)
 
-def fail(message):
+
+def fail(message) -> None:
     """вызывается при ошибке запроса"""
     tg_id = message.from_user.id
     bot.send_message(
@@ -161,7 +171,8 @@ def fail(message):
     logging.info(f'user {tg_id} gets status: fail')
     bot.register_next_step_handler(message, get_main)
 
-def ending(message):
+
+def ending(message) -> None:
     """вызывается при нажатии кнопки запроса, делает запрос"""
     tg_id = message.from_user.id
     global number, email
@@ -174,14 +185,14 @@ def ending(message):
 
 
 @bot.message_handler()
-def sort_empty(message):
+def sort_empty(message) -> None:
     """вызывается, если пользователь ввел некорретное сообщение"""
     tg_id = message.from_user.id
     bot.send_message(tg_id, conf.phrases['input_number'])
     bot.register_next_step_handler(message, get_number)
 
 
-def start_key():
+def start_key() -> None:
     """клавиатура для первого запуска"""
     markup = telebot.types.ReplyKeyboardMarkup(
         one_time_keyboard=True,
@@ -192,7 +203,7 @@ def start_key():
     return markup
 
 
-def usual_key():
+def usual_key() -> None:
     """клавиатура, если данные введены"""
     markup = telebot.types.ReplyKeyboardMarkup(
         one_time_keyboard=True,

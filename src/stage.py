@@ -1,10 +1,16 @@
-import requests
 import config
+import requests
+
 from bs4 import BeautifulSoup as bs
 
 
-def get_tracking_code(url, h, d) -> str:
-    """получает промежуточный системный код"""
+def get_tracking_code(url: str, h: dict, d: dict) -> str:
+    """
+    получает промежуточный системный код. 
+    url: ссылка получения кода
+    h: HEADERS html-запроса
+    d: BODY html-запроса
+    """
     temp = requests.post(url=url, headers=h, data=d, allow_redirects=False)
     if temp.status_code == 303:
         tracker = temp.headers['Location']
@@ -12,16 +18,25 @@ def get_tracking_code(url, h, d) -> str:
     else:
         return False
 
-def get_html(tracking_link, headers) -> str:
-    """возвращает html домашней страницы пользователя"""
+
+def get_html(tracking_link: str, headers: dict) -> str:
+    """
+    возвращает html домашней страницы пользователя
+    tracking_url: ссылка получения кода
+    h: HEADERS html-запроса 
+    """
     temp = requests.get(tracking_link, headers)
     if temp.status_code == 200:
         return temp.text
     else:
         raise False
 
-def get_person(soup) -> list:
-    """парсит ФИ пользователя"""
+
+def get_person(soup: bs) -> list:
+    """
+    парсит ФИ пользователя
+    soup: bs-объект полученный из html-страницы пользователя
+    """
     cl = 'color-gray text-shadow-white'
     person_row = soup.find_all('span', class_=cl)
     st = str(person_row[0].get_text())
@@ -31,8 +46,12 @@ def get_person(soup) -> list:
     person = [num, name]
     return person
 
-def get_status(soup) -> str:
-    """парсит статус пользователя"""
+
+def get_status(soup: bs) -> str:
+    """
+    парсит статус пользователя
+    soup: bs-объект полученный из html-страницы пользователя
+    """
     def filter_status(stat_row) -> str:
         very_row = str(stat_row).split()
         return ' '.join(very_row)
@@ -41,8 +60,12 @@ def get_status(soup) -> str:
     stat = filter_status(stat_row)
     return stat
 
-def stage(num, email):
-    """получить статус пользоввателя на портале"""
+
+def stage(num: str, email: str) -> dict:
+    """
+    получить статус пользоввателя на портале
+    num: индивидуальный номер участника в формате 'ABC-12354/78'
+    """
     URL = config.URL
     HEADERS = config.HEADERS
     par = {
@@ -62,6 +85,6 @@ def stage(num, email):
             result = dict(zip(tags, values))
             return result
         else:
-            return False
+            return None
     else:
-        return False
+        return None

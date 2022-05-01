@@ -14,9 +14,6 @@ btn_check='❓ Проверить'
 btn_edit='✏️ Изменить'
 btn_reload='🔄  Сбросить'
 
-#period of user ban in seconds
-ban_per=3600
-
 #bot dictionary
 phrases={
         'hello1':'Этот бот поможет остлеживать статус анкеты на сайте russia-edu.minobrnauki.gov.ru',
