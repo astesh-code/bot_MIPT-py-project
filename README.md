@@ -21,7 +21,7 @@ $ python bot.py
 ```
 ### From docker image
 ```
-$ docker run docker run -e API_KEY=<your_key> edu_bot
+$ docker run -e API_KEY=<your_key> edu_bot
 ```
 #
 # Working screenshot
