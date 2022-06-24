@@ -4,8 +4,9 @@
 # Features
  - Saving data for multiple checking
  - Interfaces completely based on keyboards, excluding form data input
- - Temporary ban for users who sends unexisting form data
+ - Reading API-key from environment
  - Logging
+ - Docker image
  #
 # Requirements
  - Python 3.6 and above;
@@ -24,6 +25,4 @@ $ python bot.py
 $ docker run docker run -e API_KEY=<your_key> edu_bot
 ```
 #
-# Working screenshot
-![](https://github.com/astesh-code/python_rev2/blob/dev/pictures/work.jpg)
-#
+
